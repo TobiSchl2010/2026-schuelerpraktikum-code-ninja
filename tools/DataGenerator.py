@@ -17,12 +17,13 @@ class SensorKey:
 class Sensor:
     """Sensor object, which stores all information of a given sensor."""
 
-    def __init__(self, name: str, pressure: float | None, temperature: float | None):
+    def __init__(self, name: str, pressure: float | None, temperature: float | None, distance: float | None):
         """Constructor"""
 
         self.name: str = name
         self.pressure: float | None = pressure
         self.temperature: float | None = temperature
+        self.distance: float | None = distance
 
 
 class DataGenerator:
@@ -33,7 +34,7 @@ class DataGenerator:
         self.available_sensors: list[SensorKey] = [
             SensorKey(name="thruster_1.a"),
             SensorKey(name="oxygen_tank_1"),
-            SensorKey(name="hydrogen_tank_1")
+            SensorKey(name="hydrogen_tank_1"),
         ]
 
     def generate_new_sensor_data(self):
@@ -44,30 +45,36 @@ class DataGenerator:
         temperaturO = random.uniform(90.00, 95.00)
         temperaturA = random.uniform(2800, 3500)
         druckA = random.uniform(1.0, 3.0)
-        # entfernung  = random.uniform(160.00, 2000.00)
+        entfernung  = random.uniform(160.00, 2000.00)
 
         selected_key_idx = random.randint(0, len(self.available_sensors) - 1)
         selected_key = self.available_sensors[selected_key_idx]
+
+
+        
 
         if selected_key.name == "hydrogen_tank_1": 
             sensor_data = Sensor(
                 name=selected_key.name,
                 pressure=druckH, 
-                temperature=temperaturH
+                temperature=temperaturH,
+                distance=entfernung 
         )
      
         elif selected_key.name == "oxygen_tank_1":
             sensor_data = Sensor(
                 name=selected_key.name,
                 pressure=druckO,
-                temperature=temperaturO
+                temperature=temperaturO,
+                distance=entfernung 
         )
 
         else:
             sensor_data = Sensor(
                 name=selected_key.name,
                 pressure=druckA,
-                temperature=temperaturA
+                temperature=temperaturA,
+                distance=entfernung
         )
 
         return sensor_data
