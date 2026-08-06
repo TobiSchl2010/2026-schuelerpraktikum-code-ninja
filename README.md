@@ -84,3 +84,25 @@ T. Werner, <thomas.werner@qaware.de>
 
 R. Kalleicher, <robin.kalleicher@qaware.de>
 C. Thelen, <christoph.thelen@qaware.de>
+
+
+
+## Ausführung
+
+Um den ganzen Prozess laufen zu lassen, mache Folgendes Schritt für Schritt:
+
+Terminal 1:
+source venv/bin/activate
+docker compose up -d
+
+Terminal 2:
+source venv/bin/activate
+uvicorn main:app --reload
+
+Terminal 3:
+source venv/bin/activate
+streamlit run streamlit_app.py
+
+Dazwischen also jeweils ein neues Terminal erstellen!
+
+
