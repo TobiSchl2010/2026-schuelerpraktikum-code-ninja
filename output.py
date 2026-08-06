@@ -2,11 +2,12 @@
 import streamlit as st
 import pandas as pd 
 
-druckH = [2.9, 1.5]
-druckO = [1.0, 5.8]
+druckH = [1.5, 3.5]
+druckO = [2.5, 5.0]
 zeit = ["2020-12-12 12:30", "2020-12-12 13:30"]
-temperaturH = [30, 50]
-temperaturO = [10, 40]
+temperaturH = [14.00, 20.15]
+temperaturO = [90.00, 95.00]
+entfernung = [160, 2000]
 komponente = ["Wasserstofftank", "Sauerstofftank"]
 
 
@@ -35,7 +36,7 @@ tabelleO = pd.DataFrame ({
          "Zeitstempel": [zeit[zeit]],
          "Temperatur (in °C)": [temperaturO[temperaturO]],
          "Druck (in Bar)": [druckO[druckO]],
-         #"Entfernung zur Erde (in km)": [Entfernung2],
+         "Entfernung zur Erde (in km)": [entfernung[entfernung]]
             })
 
 
@@ -95,18 +96,13 @@ with st.expander("Temperatur vom Sauerstofftank"):
     st.line_chart(daten)
 
 
-# with st.expander("Entfernung zur Erde"):
-#     daten = pd.DataFrame({
-#         "Zeit": [
-#            zeit1,
-#            zeit2
-#            ],
-
-#         "Entfernung": [
-#             Entfernung2,
-#             Entfernung1
-#             ]
-#         })
+with st.expander("Entfernung zur Erde"):
+    daten = pd.DataFrame({
+        "Zeit": 
+        [zeit [i] for i in range(len(zeit))],
+        "Entfernung":
+        [entfernung [i] for i in range(len(entfernung))],
+        })
 
 #     # Zeit als Index für die X-Achse
 #     daten = daten.set_index("Zeit")
