@@ -7,7 +7,7 @@ from fastapi import FastAPI
 from fastapi.encoders import jsonable_encoder
 from starlette import status
 from starlette.responses import JSONResponse
-from validation import Measurement
+from processing.validation import Measurement
 
 from models import DataModel, UpdateDataModel
 

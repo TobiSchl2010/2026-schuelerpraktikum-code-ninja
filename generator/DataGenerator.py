@@ -74,11 +74,3 @@ class DataGenerator:
             json.dump(content, file)
 
 
-if __name__ == '__main__':
-    generator = DataGenerator()
-
-    while True:
-        data = generator.generate_new_sensor_data()
-        generator.store_sensor_data(data=data)
-        print(f"Sucessfully stored: {data}")
-        time.sleep(2)
