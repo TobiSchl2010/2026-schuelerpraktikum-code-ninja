@@ -68,7 +68,10 @@ async def stream_daten():
                         tabellen_zeilen.append({
                             "Komponente": anzeigename,
                             "Temperatur (K)": aktueller_wert(eintraege, "temperature"),
-                            "Druck (bar)": aktueller_wert(eintraege, "pressure")
+                            "Druck (bar)": aktueller_wert(eintraege, "pressure"),
+                            "X-Position (°)": aktueller_wert(eintraege, "x_deg"),
+                            "Y-Position (°)": aktueller_wert(eintraege, "y_deg"),
+                            "Z-Position (km)": aktueller_wert(eintraege, "z_km")
                         })
 
                     st.dataframe(

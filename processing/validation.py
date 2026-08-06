@@ -8,6 +8,9 @@ class Measurement(BaseModel):
     type: str
     temperature: float
     pressure: float
+    x_deg: float 
+    y_deg: float 
+    z_km: float 
 
     @field_validator("temperature")
     def validate_temperature(cls, value):

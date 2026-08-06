@@ -4,11 +4,6 @@ import requests
 
 from models import DataModel, UpdateDataModel
 
-# TODO: Wie erhalten wir für uns interessante Informationen von der Verwaltung?
-# TODO: Was sind interessante Daten und welche benötigen wir unter Umständen gar nicht?
-# TODO: Wie gehen wir mit beschädigten bzw. falschen Informationen um?
-# TODO: Wie stellen wir die Informationen bestmöglich für den Nutzer da?
-
 if __name__ == '__main__':
     data = DataModel(name="Test")
     new_data = UpdateDataModel(name="Updated Test")

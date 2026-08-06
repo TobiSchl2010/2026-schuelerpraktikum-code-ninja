@@ -41,7 +41,10 @@ async def daten_laden():
             "name": 1,
             "timestamp": 1,
             "temperature": 1,
-            "pressure": 1
+            "pressure": 1,
+            "x_deg": 1,
+            "y_deg": 1,
+            "z_km": 1
         }
     )
 
@@ -61,7 +64,10 @@ async def daten_laden():
         ergebnis[name].append({
             "timestamp": eintrag["timestamp"],
             "temperature": eintrag.get("temperature"),
-            "pressure": eintrag.get("pressure")
+            "pressure": eintrag.get("pressure"),
+            "x_deg": eintrag.get("x_deg"),
+            "y_deg": eintrag.get("y_deg"),
+            "z_km": eintrag.get("z_km")
         })
 
     return ergebnis
