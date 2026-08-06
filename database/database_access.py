@@ -1,7 +1,8 @@
 import asyncio
-from motor.motor_asyncio import AsyncIOMotorClient
+import os
+
 from dotenv import load_dotenv
-import os 
+from motor.motor_asyncio import AsyncIOMotorClient
 
 load_dotenv()
 
@@ -14,7 +15,8 @@ MONGO_DB = os.getenv("MONGO_DB")
 client = AsyncIOMotorClient(
     f"mongodb://{MONGO_USER}:{MONGO_PASSWORD}@{MONGO_HOST}:{MONGO_PORT}/?authSource=admin"
 )
-db = client["data"]
+
+db = client[MONGO_DB]
 collection = db["data"]
 
 komponenten = [
@@ -44,7 +46,7 @@ async def daten_laden():
     )
 
     daten = await cursor.sort(
-        "timestamp", 1
+    "timestamp", -1
     ).limit(100).to_list(length=None)
 
 

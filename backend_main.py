@@ -2,8 +2,8 @@ import asyncio
 
 from fastapi import FastAPI, WebSocket
 
-from database_access import daten_laden
-from websocket import connect, disconnect, send_data
+from database.database_access import daten_laden
+from api.websocket import connect, disconnect, send_data
 
 app = FastAPI()
 
