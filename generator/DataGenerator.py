@@ -5,8 +5,37 @@ import random
 import math
 
 BASE_PATH = path = os.path.dirname(os.path.dirname(__file__))
-OMEGA_S =  2 * math.pi / 5400 # rad/s
-OMEGA_E = 2 * math.pi / 86164 # rad/s
+
+# --- ECHTE WERTE DES SATELLITEN ---
+UMLAUFZEIT = 5400.0   # Ein Umlauf um die Erde dauert 90 Minuten
+STERNENTAG = 86164.0  # Eine Drehung der Erde dauert knapp 24 Stunden
+
+OMEGA_S = 2 * math.pi / UMLAUFZEIT  # rad/s
+OMEGA_E = 2 * math.pi / STERNENTAG  # rad/s
+
+# --- ZEITRAFFER ---
+# In Wirklichkeit dauert ein Umlauf 90 Minuten. So lange will beim
+# Zuschauen niemand warten - man würde immer nur ein kurzes Stück
+# der Bahn sehen und es sähe aus wie eine Linie.
+#
+# Deshalb läuft die Uhr der Simulation schneller. Nur die ZEIT wird
+# gestreckt, die Bahn selbst bleibt physikalisch richtig.
+#
+# Hier einstellen, wie lange ein kompletter Umlauf auf dem Bildschirm
+# dauern soll (in echten Sekunden). Größer = langsamer und ruhiger.
+UMLAUF_ECHTZEIT = 240.0  # 4 Minuten für einen ganzen Ring um die Erde
+
+ZEITRAFFER = UMLAUFZEIT / UMLAUF_ECHTZEIT  # = 22.5 fache Geschwindigkeit
+
+# Fester Bezugspunkt für die Uhr der Simulation.
+#
+# Wichtig: Die Zeit wird NICHT beim Programmstart auf 0 gesetzt.
+# Sonst würde der Satellit bei jedem Neustart des Servers wieder an
+# derselben Stelle beginnen - und mit "uvicorn --reload" passiert das
+# bei jedem Speichern. Genau das ließ ihn hin und her springen.
+BEZUGSZEIT = datetime.datetime(
+    2026, 1, 1, tzinfo=datetime.timezone.utc
+).timestamp()
 
 # Parameter für die Umlaufbahn (Beispielwerte, frei anpassbar)
 INCLINATION_DEG = 50.0  # Bahnneigung in Grad (z.B. 50° Nord/Süd)
@@ -53,7 +82,23 @@ class DataGenerator:
             SensorKey(name="oxygen_tank_1", type="gas_valve"),
             SensorKey(name="hydrogen_tank_1", type="gas_valve")
         ]
-        self.start_time = datetime.datetime.now().timestamp()  # noqa: DTZ005
+
+    @staticmethod
+    def simulationszeit():
+        """
+        Liefert die Uhrzeit der Simulation in Sekunden.
+
+        Sie läuft um den ZEITRAFFER schneller als die echte Uhr und
+        zählt ab einem festen Datum. Dadurch fliegt der Satellit nach
+        einem Neustart des Servers einfach weiter, statt wieder von
+        vorne anzufangen.
+        """
+        echte_sekunden = (
+            datetime.datetime.now(datetime.timezone.utc).timestamp()
+            - BEZUGSZEIT
+        )
+
+        return echte_sekunden * ZEITRAFFER
 
     @staticmethod
     def berechne_satelliten_koordinaten(t_sekunden):
@@ -97,7 +142,9 @@ class DataGenerator:
         #pressure = random.uniform(0.5, 9.0)
         #temperature = random.uniform(200.0, 500.0)
 
-        x_deg, y_deg, z_km = self.berechne_satelliten_koordinaten(datetime.datetime.now().timestamp()-self.start_time) # noqa: DTZ005
+        x_deg, y_deg, z_km = self.berechne_satelliten_koordinaten(
+            self.simulationszeit()
+        )
         
         # 2. Standardabweichung (wie stark streuen die Werte im Schnitt?)
         sigma_grad = 0.02  # Typische Abweichung in Grad

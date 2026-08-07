@@ -34,10 +34,16 @@ MAX_UEBERGANG = 15.0
 UEBERGANG_ZUSCHLAG = 1.25
 
 # So viele Punkte behält die Flugbahn (ältere werden vergessen).
-MAX_BAHN_PUNKTE = 700
+#
+# Ein kompletter Umlauf ist etwa 43000 km lang.
+# 900 Punkte x 55 km = 49500 km - die Spur reicht also für einen
+# ganzen Ring um die Erde. Mit den alten Werten (700 x 20 km =
+# 14000 km) war nur ein Drittel davon zu sehen, egal wie lange man
+# gewartet hat.
+MAX_BAHN_PUNKTE = 900
 
 # Erst wenn der Satellit so viele km geflogen ist, wird ein Bahnpunkt gespeichert.
-MIN_BAHN_ABSTAND = 20
+MIN_BAHN_ABSTAND = 55
 
 # Größe des Satellitenmodells in km (nur zur Darstellung, nicht echt).
 SATELLIT_GROESSE = 900
