@@ -41,23 +41,44 @@ async def websocket_endpoint(websocket: WebSocket):
     finally:
         await disconnect(websocket)
 
+# Diese drei Aufgaben laufen dauerhaft im Hintergrund.
+#
+# Wichtig: In jeder Runde wird ein Fehler abgefangen. Ohne das wuerde
+# ein einziger Fehler die Aufgabe fuer immer beenden - der Server
+# laeuft dann noch, liefert aber nie wieder Daten.
+
 async def generate_json_data():
     while True:
-        data = generator.generate_new_sensor_data()
-        generator.store_sensor_data(data)
-        print(f"JSON gespeichert: {data.name}")
+        try:
+            data = generator.generate_new_sensor_data()
+            generator.store_sensor_data(data)
+            print(f"JSON gespeichert: {data.name}")
+
+        except Exception as fehler:
+            print(f"Fehler beim Erzeugen der Daten: {fehler}")
+
         await asyncio.sleep(2)
 
 async def process_json_data():
     while True:
-        await process_json_folder("data")
-        print("JSON verarbeitet")
+        try:
+            await process_json_folder("data")
+            print("JSON verarbeitet")
+
+        except Exception as fehler:
+            print(f"Fehler beim Verarbeiten der Daten: {fehler}")
+
         await asyncio.sleep(2)
 
 async def daten_stream():
     while True:
-        daten = await daten_laden()
-        await send_data(daten)
+        try:
+            daten = await daten_laden()
+            await send_data(daten)
+
+        except Exception as fehler:
+            print(f"Fehler beim Senden der Daten: {fehler}")
+
         await asyncio.sleep(1)
 
 # uvicorn main:app --reload
