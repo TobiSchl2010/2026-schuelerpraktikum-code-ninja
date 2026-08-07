@@ -143,6 +143,89 @@ komponenten_namen = {
 }
 
 
+# --------------------------------------------------
+# Aussehen der Tabelle
+# --------------------------------------------------
+
+# Diese Spalten zeigt die Tabelle (Feld in den Daten, Spaltenname)
+MESSGROESSEN = [
+    {"feld": "temperature", "spalte": "Temperatur (K)", "titel": "Temperatur"},
+    {"feld": "pressure", "spalte": "Druck (bar)", "titel": "Druck"}
+]
+
+# So viele Messungen zeigt die Tabelle pro Sensor.
+# Kommt eine neue dazu, faellt die aelteste heraus.
+MAX_ZEILEN_PRO_SENSOR = 3
+
+# Jeder Sensor hat seine eigene Zeilenfarbe
+sensor_farben = {
+    "oxygen_tank_1": "#86b6ef",
+    "thruster_1.a": "#5598e7",
+    "hydrogen_tank_1": "#2a78d6"
+}
+
+TABELLEN_SCHRIFT = "#000000"
+
+TABELLEN_LINIE = "2px solid #000000"
+LINIE_SENKRECHT = "2px solid #000000"
+LINIE_KOPFZEILE = "3px solid #000000"
+LINIE_AUSSEN = "1px solid #000000"
+KOPFZEILE_HINTERGRUND = "#efe4c2"
+
+EINZUG_ERSTE_SPALTE = "12px"
+ABSTAND_LETZTE_SPALTE = "12px"
+
+KOPFZEILE_EINZUG = " " * 3
+KOPFZEILE_ABSTAND = " " * 3
+
+TABELLEN_STILE = [
+    {"selector": "", "props": [
+        ("border", LINIE_AUSSEN),
+        ("border-collapse", "collapse")
+    ]},
+    {"selector": "th", "props": [
+        ("background-color", KOPFZEILE_HINTERGRUND),
+        ("color", "#000000"),
+        ("font-weight", "700"),
+        ("border-top", "none"),
+        ("border-bottom", LINIE_KOPFZEILE),
+        ("border-left", LINIE_SENKRECHT),
+        ("border-right", LINIE_SENKRECHT)
+    ]},
+    {"selector": "td", "props": [
+        ("border-top", "none"),
+        ("border-bottom", "none"),
+        ("border-left", LINIE_SENKRECHT),
+        ("border-right", LINIE_SENKRECHT),
+        ("font-variant-numeric", "tabular-nums")
+    ]},
+
+    {"selector": "th:first-child", "props": [("border-left", LINIE_AUSSEN)]},
+    {"selector": "td:first-child", "props": [
+        ("border-left", LINIE_AUSSEN),
+        ("padding-left", EINZUG_ERSTE_SPALTE)
+    ]},
+    {"selector": "th:last-child", "props": [("border-right", LINIE_AUSSEN)]},
+    {"selector": "td:last-child", "props": [
+        ("border-right", LINIE_AUSSEN),
+        ("padding-right", ABSTAND_LETZTE_SPALTE)
+    ]}
+]
+
+# Fehlt ein Messwert, steht dieses Zeichen in der Zelle.
+#
+# Ohne das stürzt die Tabelle ab: "{:.2f}".format(None) wirft
+# TypeError: unsupported format string passed to NoneType.__format__
+FEHLENDER_WERT = "-"
+
+# Die Zeilenfarben werden über den Anzeigenamen gesucht,
+# weil in der Tabelle nicht der Schlüssel steht.
+farben_nach_anzeigename = {
+    komponenten_namen[schluessel]: farbe
+    for schluessel, farbe in sensor_farben.items()
+}
+
+
 # Beschreibung der Live-Diagramme:
 # (Schlüssel der Komponente, Messfeld, Titel, Beschriftung der Y-Achse)
 diagramm_beschreibung = [
@@ -1140,7 +1223,92 @@ def abstand(punkt_a, punkt_b):
 
 
 
+def neueste_eintraege(eintraege, anzahl=MAX_ZEILEN_PRO_SENSOR):
+    """
+    Liefert die jüngsten Datensätze einer Komponente, neuester zuerst.
+
+    Kommt ein neuer Datensatz dazu, fällt damit automatisch der
+    älteste raus.
+    """
+
+    sortiert = sorted(
+        eintraege,
+
+        key=lambda e: pd.to_datetime(
+            e["timestamp"],
+            format="ISO8601"
+        ),
+
+        reverse=True
+    )
+
+    return sortiert[:anzahl]
+
+
+
+def gerundet(eintrag, feld):
+    """
+    Liest einen Messwert aus einem Datensatz und rundet ihn.
+    """
+
+    wert = eintrag.get(feld)
+
+    return (
+        round(wert, 2)
+        if wert is not None
+        else None
+    )
+
+
+
+def tabelle_einfaerben(tabelle):
+    """
+    Färbt jede Zeile in der Farbe ihres Sensors und trennt die Blöcke.
+
+    Arbeitet auf der ganzen Tabelle statt zeilenweise, weil für die
+    Trennlinie bekannt sein muss, ob die Zeile darüber zum selben
+    Sensor gehört.
+    """
+
+    stile = pd.DataFrame(
+        "",
+        index=tabelle.index,
+        columns=tabelle.columns
+    )
+
+    vorherige_komponente = None
+
+
+    for position, (zeilen_index, zeile) in enumerate(tabelle.iterrows()):
+
+        komponente = zeile["Komponente"]
+        regeln = []
+
+
+        farbe = farben_nach_anzeigename.get(komponente)
+
+        if farbe is not None:
+            regeln.append(f"background-color: {farbe}")
+            regeln.append(f"color: {TABELLEN_SCHRIFT}")
+
+
+        if position > 0 and komponente != vorherige_komponente:
+            regeln.append(f"border-top: {TABELLEN_LINIE}")
+
+
+        stile.loc[zeilen_index] = "; ".join(regeln)
+
+        vorherige_komponente = komponente
+
+
+    return stile
+
+
+
 def tabellen_zeilen_bauen(daten):
+    """
+    Sammelt die jüngsten Messwerte aller Komponenten für die Tabelle.
+    """
 
     zeilen = []
 
@@ -1148,52 +1316,32 @@ def tabellen_zeilen_bauen(daten):
     for schluessel, anzeigename in komponenten_namen.items():
 
 
-        eintraege = daten.get(
-            schluessel,
-            []
-        )
+        for eintrag in neueste_eintraege(
+            daten.get(schluessel, [])
+        ):
+
+            zeile = {
+
+                "Komponente":
+                    anzeigename,
+
+                "Zeit":
+                    pd.to_datetime(
+                        eintrag["timestamp"],
+                        format="ISO8601"
+                    )
+            }
 
 
-        zeilen.append({
+            for messgroesse in MESSGROESSEN:
 
-            "Komponente":
-                anzeigename,
-
-
-            "Temperatur (K)":
-                aktueller_wert(
-                    eintraege,
-                    "temperature"
-                ),
-
-
-            "Druck (bar)":
-                aktueller_wert(
-                    eintraege,
-                    "pressure"
-                ),
-
-
-            "X-Position (°)":
-                aktueller_wert(
-                    eintraege,
-                    "x_deg"
-                ),
-
-
-            "Y-Position (°)":
-                aktueller_wert(
-                    eintraege,
-                    "y_deg"
-                ),
-
-
-            "Z-Position (km)":
-                aktueller_wert(
-                    eintraege,
-                    "z_km"
+                zeile[messgroesse["spalte"]] = gerundet(
+                    eintrag,
+                    messgroesse["feld"]
                 )
-        })
+
+
+            zeilen.append(zeile)
 
 
     return zeilen
@@ -1227,34 +1375,30 @@ def baue_oberflaeche():
     # Die 3D Ansicht bekommt etwas mehr Platz, damit man bequem
     # darin herumdrehen kann.
 
-    col1, col2 = st.columns([1, 1.3])
+    # Tabelle oben, darunter die 3D Ansicht.
+    # Beide über die ganze Breite (keine Spalten mehr).
+
+    st.subheader(
+        f"Aktuelle Messwerte (letzte {MAX_ZEILEN_PRO_SENSOR} pro Sensor)"
+    )
+
+    tabellen_platzhalter = st.empty()
 
 
-    with col1:
+    st.subheader(
+        "Umlaufbahn"
+    )
 
-        st.subheader(
-            "Aktuelle Messwerte"
-        )
-
-        tabellen_platzhalter = st.empty()
+    bahn_platzhalter = st.empty()
 
 
-    with col2:
-
-        st.subheader(
-            "Umlaufbahn"
-        )
-
-        bahn_platzhalter = st.empty()
-
-
-        # Nur ein Hinweistext, absichtlich kein Bedienelement:
-        # Text löst keinen Neustart des Skripts aus.
-        st.caption(
-            "Ziehen = drehen · Mausrad = zoomen · "
-            "Rechte Maustaste ziehen = verschieben · "
-            "Doppelklick = Ansicht zurücksetzen"
-        )
+    # Nur ein Hinweistext, absichtlich kein Bedienelement:
+    # Text löst keinen Neustart des Skripts aus.
+    st.caption(
+        "Ziehen = drehen · Mausrad = zoomen · "
+        "Rechte Maustaste ziehen = verschieben · "
+        "Doppelklick = Ansicht zurücksetzen"
+    )
 
 
     # --------------------------------------------------
@@ -1302,6 +1446,89 @@ def baue_oberflaeche():
 
 
 
+def zeige_tabelle(daten, tabellen_platzhalter):
+    """
+    Zeigt die letzten Messwerte pro Sensor als eingefärbte Tabelle.
+
+    Die Tabelle wird immer in denselben Platzhalter gezeichnet.
+    Dadurch wird sie nur ausgetauscht und die Seite flackert nicht.
+    """
+
+    zeilen = tabellen_zeilen_bauen(daten)
+
+
+    if not zeilen:
+
+        tabellen_platzhalter.info(
+            "Noch keine Messwerte empfangen."
+        )
+
+        return
+
+
+    tabelle = pd.DataFrame(zeilen).sort_values(
+        ["Komponente", "Zeit"],
+        ascending=[True, False]
+    )
+
+
+    stile = tabelle_einfaerben(tabelle)
+
+
+    # Die Kopfzeile wird fett geschrieben. Bei der ersten und der
+    # letzten Spalte kommt etwas Abstand zum Rand dazu.
+    fett = {}
+
+    for spalte in tabelle.columns:
+
+        titel = f"**{spalte}**"
+
+
+        if spalte == "Komponente":
+            titel = KOPFZEILE_EINZUG + titel
+
+        elif spalte == MESSGROESSEN[-1]["spalte"]:
+            titel = titel + KOPFZEILE_ABSTAND
+
+
+        fett[spalte] = titel
+
+
+    tabelle = tabelle.rename(columns=fett)
+    stile = stile.rename(columns=fett)
+
+
+    spalten_format = {
+        fett["Zeit"]: lambda z: z.strftime("%Y-%m-%d %H:%M:%S")
+    }
+
+    for messgroesse in MESSGROESSEN:
+        spalten_format[fett[messgroesse["spalte"]]] = "{:.2f}"
+
+
+    tabellen_platzhalter.table(
+
+        tabelle.style
+            .apply(lambda _: stile, axis=None)
+
+            # na_rep: Ohne das stürzt die Tabelle ab, sobald ein
+            # Messwert fehlt.
+            .format(
+                spalten_format,
+                na_rep=FEHLENDER_WERT
+            )
+
+            .set_table_styles(TABELLEN_STILE),
+
+        border=False,
+
+        hide_index=True,
+
+        width="stretch"
+    )
+
+
+
 def zeige_messwerte(
     daten,
     tabellen_platzhalter,
@@ -1311,13 +1538,9 @@ def zeige_messwerte(
     Tabelle und Live-Diagramme neu füllen.
     """
 
-    tabellen_platzhalter.dataframe(
-
-        pd.DataFrame(
-            tabellen_zeilen_bauen(daten)
-        ),
-
-        hide_index=True
+    zeige_tabelle(
+        daten,
+        tabellen_platzhalter
     )
 
 
